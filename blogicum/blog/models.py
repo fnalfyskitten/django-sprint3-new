@@ -1,5 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
+
+MAX_LENGTH = 256
 
 
 class BasePost(models.Model):
@@ -13,12 +16,12 @@ class BasePost(models.Model):
         verbose_name='Добавлено'
     )
 
-    class Meta():
+    class Meta:
         abstract = True
 
 
 class Category(BasePost):
-    title = models.CharField(max_length=256, verbose_name='Заголовок')
+    title = models.CharField(max_length=MAX_LENGTH, verbose_name='Заголовок')
     description = models.TextField(verbose_name='Описание')
     slug = models.SlugField(
         unique=True,
@@ -32,22 +35,34 @@ class Category(BasePost):
         verbose_name_plural = 'Категории'
 
     def __str__(self):
-        return self.title
+        return f'{self.title[:50]}'
 
 
 class Location(BasePost):
-    name = models.CharField(max_length=256, verbose_name='Название места')
+    name = models.CharField(max_length=MAX_LENGTH,
+                            verbose_name='Название места')
 
     class Meta:
         verbose_name = 'местоположение'
         verbose_name_plural = 'Местоположения'
 
         def __str__(self):
-            return self.name
+            return f'{self.name[:50]}'
+
+
+class PostManager(models.Manager):
+    def get_published(self):
+        now = timezone.now()
+        return self.filter(
+            is_published=True,
+            pub_date__lte=now,
+            category__is_published=True
+        ).select_related('author', 'location', 'category')
 
 
 class Post(BasePost):
-    title = models.CharField(max_length=256, verbose_name='Заголовок')
+    objects = PostManager()
+    title = models.CharField(max_length=MAX_LENGTH, verbose_name='Заголовок')
     text = models.TextField(verbose_name='Текст')
     pub_date = models.DateTimeField(
         verbose_name='Дата и время публикации',
@@ -63,6 +78,7 @@ class Post(BasePost):
         Location,
         on_delete=models.SET_NULL,
         null=True,
+        blank=True,
         verbose_name='Местоположение'
     )
     category = models.ForeignKey(
@@ -75,6 +91,8 @@ class Post(BasePost):
     class Meta:
         verbose_name = 'публикация'
         verbose_name_plural = 'Публикации'
+        default_related_name = 'post'
+        ordering = ('-pub_date',)
 
     def __str__(self):
-        return self.title
+        return f'{self.title[:50]}'
