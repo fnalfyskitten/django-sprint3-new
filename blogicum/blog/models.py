@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
 
-MAX_LENGTH = 256
+TITLE_MAX_LENGTH = 256
 
 
 class BasePost(models.Model):
@@ -21,7 +21,8 @@ class BasePost(models.Model):
 
 
 class Category(BasePost):
-    title = models.CharField(max_length=MAX_LENGTH, verbose_name='Заголовок')
+    title = models.CharField(max_length=TITLE_MAX_LENGTH,
+                             verbose_name='Заголовок')
     description = models.TextField(verbose_name='Описание')
     slug = models.SlugField(
         unique=True,
@@ -35,11 +36,11 @@ class Category(BasePost):
         verbose_name_plural = 'Категории'
 
     def __str__(self):
-        return f'{self.title[:50]}'
+        return self.title[:50]
 
 
 class Location(BasePost):
-    name = models.CharField(max_length=MAX_LENGTH,
+    name = models.CharField(max_length=TITLE_MAX_LENGTH,
                             verbose_name='Название места')
 
     class Meta:
@@ -47,7 +48,7 @@ class Location(BasePost):
         verbose_name_plural = 'Местоположения'
 
         def __str__(self):
-            return f'{self.name[:50]}'
+            return self.name[:50]
 
 
 class PostManager(models.Manager):
@@ -61,8 +62,8 @@ class PostManager(models.Manager):
 
 
 class Post(BasePost):
-    objects = PostManager()
-    title = models.CharField(max_length=MAX_LENGTH, verbose_name='Заголовок')
+    title = models.CharField(max_length=TITLE_MAX_LENGTH,
+                             verbose_name='Заголовок')
     text = models.TextField(verbose_name='Текст')
     pub_date = models.DateTimeField(
         verbose_name='Дата и время публикации',
@@ -88,6 +89,8 @@ class Post(BasePost):
         verbose_name='Категория'
     )
 
+    objects = PostManager()
+
     class Meta:
         verbose_name = 'публикация'
         verbose_name_plural = 'Публикации'
@@ -95,4 +98,4 @@ class Post(BasePost):
         ordering = ('-pub_date',)
 
     def __str__(self):
-        return f'{self.title[:50]}'
+        return self.title[:50]
